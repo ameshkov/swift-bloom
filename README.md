@@ -36,3 +36,53 @@ Run `make init` to setup pre-commit hooks.
 - `make release` - builds the Swift package (release).
 
 [swift-format]: https://github.com/swiftlang/swift-format
+
+## Usage
+
+### BloomFilterBuilder (Command-Line Tool)
+
+The `BloomFilterBuilder` CLI lets you build, inspect, and check Bloom filters from the command line.
+
+#### Build a Bloom filter from a list of keywords
+
+```sh
+swift run BloomFilterBuilder build \
+  --input-path path/to/keywords.txt \
+  --false-positive-tolerance 0.001 \
+  --output-path path/to/filter.plist
+```
+
+- `--input-path`: Path to a newline-separated file with keywords.
+- `--false-positive-tolerance`: Desired false-positive rate (e.g., 0.001).
+- `--output-path`: Where to save the generated bloom filter plist.
+
+#### Inspect a Bloom filter
+
+```sh
+swift run BloomFilterBuilder read --filter-path path/to/filter.plist
+```
+
+#### Check if a keyword might be present
+
+```sh
+swift run BloomFilterBuilder check \
+  --filter-path path/to/filter.plist \
+  --keyword "example.com"
+```
+
+### Using BloomFilter in Swift
+
+You can use the `BloomFilter` class directly in your Swift code.
+
+#### Creating a Bloom filter from a list of items
+
+```swift
+import BloomFilter
+
+let items = ["apple", "banana", "cherry"]
+let falsePositiveTolerance = 0.001
+let bloom = BloomFilter(items: items, falsePositiveTolerance: falsePositiveTolerance)
+
+print(bloom.contains("banana")) // true
+print(bloom.contains("orange")) // false (or possibly true, but unlikely)
+```
