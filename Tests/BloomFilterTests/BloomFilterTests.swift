@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import swift_bloom
+@testable import BloomFilter
 
 @Test func testBloomFilterBasicFunctionality() async throws {
     // Test with a small set of items and reasonable false positive rate
@@ -29,11 +29,11 @@ import Testing
     #expect(falsePositives <= 1, "Too many false positives: \(falsePositives)")
 
     // Check statistics
-    let stats = bloomFilter.getStatistics()
-    #expect(stats["numberOfItems"] as? Int == items.count)
-    #expect(stats["falsePositiveTolerance"] as? Double == falsePositiveRate)
-    #expect(stats["numberOfBits"] as? Int ?? 0 > 0)
-    #expect(stats["numberOfHashes"] as? Int ?? 0 > 0)
+    #expect(bloomFilter.getNumberOfItems() == items.count)
+    #expect(bloomFilter.getFalsePositiveTolerance() == falsePositiveRate)
+    #expect(bloomFilter.getNumberOfBits() > 0)
+    #expect(bloomFilter.getNumberOfHashes() > 0)
+    #expect(bloomFilter.getMurmurSeed() > 0)
 }
 
 @Test func testBloomFilterFromData() async throws {
@@ -51,7 +51,10 @@ import Testing
     let reconstructedFilter = BloomFilter(
         data: filterData,
         falsePositiveTolerance: falsePositiveRate,
-        numberOfItems: originalItems.count
+        numberOfItems: originalItems.count,
+        numberOfBits: originalFilter.getNumberOfBits(),
+        numberOfHashes: originalFilter.getNumberOfHashes(),
+        murmurSeed: originalFilter.getMurmurSeed()
     )
 
     // Both filters should behave identically
@@ -87,21 +90,7 @@ import Testing
         #expect(bloomFilter.contains(item), "Item '\(item)' should be found")
     }
 
-    let stats = bloomFilter.getStatistics()
-    let numberOfHashes = stats["numberOfHashes"] as? Int ?? 0
-    #expect(numberOfHashes > 1, "Should use multiple hash functions")
-}
-
-@Test func testEmptyFilter() async throws {
-    // Test with empty array
-    let emptyFilter = BloomFilter(items: [], falsePositiveTolerance: 0.01)
-
-    // Should not contain any items
-    #expect(!emptyFilter.contains("anything"))
-    #expect(!emptyFilter.contains(""))
-
-    let stats = emptyFilter.getStatistics()
-    #expect(stats["numberOfItems"] as? Int == 0)
+    #expect(bloomFilter.getNumberOfHashes() > 1)
 }
 
 @Test func testLargeDataset() async throws {
@@ -216,25 +205,25 @@ import Testing
     )
     let filterData = originalFilter.getData()
 
-    // Debug: Print original filter stats
-    let originalStats = originalFilter.getStatistics()
-    print("Original filter stats: \(originalStats)")
-
     // Reconstruct with same seed
     let reconstructedFilter = BloomFilter(
         data: filterData,
         falsePositiveTolerance: 0.05,
         numberOfItems: items.count,
+        numberOfBits: originalFilter.getNumberOfBits(),
+        numberOfHashes: originalFilter.getNumberOfHashes(),
         murmurSeed: customSeed
     )
 
-    // Debug: Print reconstructed filter stats
-    let reconstructedStats = reconstructedFilter.getStatistics()
-    print("Reconstructed filter stats: \(reconstructedStats)")
-
     // Verify the filters have the same parameters
-    #expect(originalStats["numberOfBits"] as? Int == reconstructedStats["numberOfBits"] as? Int)
-    #expect(originalStats["numberOfHashes"] as? Int == reconstructedStats["numberOfHashes"] as? Int)
+    #expect(originalFilter.getNumberOfBits() == reconstructedFilter.getNumberOfBits())
+    #expect(originalFilter.getNumberOfHashes() == reconstructedFilter.getNumberOfHashes())
+    #expect(originalFilter.getNumberOfItems() == reconstructedFilter.getNumberOfItems())
+    #expect(
+        originalFilter.getFalsePositiveTolerance()
+            == reconstructedFilter.getFalsePositiveTolerance()
+    )
+    #expect(originalFilter.getMurmurSeed() == reconstructedFilter.getMurmurSeed())
 
     // Both filters should behave identically for original items
     for item in items {
@@ -257,6 +246,44 @@ import Testing
     }
 }
 
+@Test func testCreateBloomFilter() async throws {
+    let bloomFilter = BloomFilter(
+        numberOfBits: 144,
+        numberOfHashes: 10,
+        numberOfItems: 10,
+        falsePositiveTolerance: 0.0001,
+        murmurSeed: 3919904948
+    )
+
+    bloomFilter.add("example.com")
+    // bloomFilter.add("example1.com")
+    bloomFilter.add("example2.com")
+    bloomFilter.add("example3.com")
+    bloomFilter.add("example4.com")
+    bloomFilter.add("example5.com")
+    bloomFilter.add("example6.com")
+    bloomFilter.add("example7.com")
+    bloomFilter.add("example8.com")
+    bloomFilter.add("example9.com")
+    bloomFilter.add("example10.com/resource?query=bugs")
+
+    print("\n=== createBloomFilter Test ===")
+    print(bloomFilter)
+    print("=== End createBloomFilter Test ===\n")
+
+    #expect(bloomFilter.contains("example.com"))
+    // #expect(bloomFilter.contains("example1.com"))
+    #expect(bloomFilter.contains("example2.com"))
+    #expect(bloomFilter.contains("example3.com"))
+    #expect(bloomFilter.contains("example4.com"))
+    #expect(bloomFilter.contains("example5.com"))
+    #expect(bloomFilter.contains("example6.com"))
+    #expect(bloomFilter.contains("example7.com"))
+    #expect(bloomFilter.contains("example8.com"))
+    #expect(bloomFilter.contains("example9.com"))
+    #expect(bloomFilter.contains("example10.com/resource?query=bugs"))
+}
+
 @Test func demonstrateBloomFilter() async throws {
     guard let data = Data(base64Encoded: "KnFnz7/dUDyK51HqlhTlswav") else {
         throw NSError(domain: "Invalid base64 data", code: 0, userInfo: nil)
@@ -266,12 +293,26 @@ import Testing
         data: data,
         falsePositiveTolerance: 0.0001,
         numberOfItems: 10,
+        numberOfBits: 144,
+        numberOfHashes: 10,
         murmurSeed: 3919904948
     )
 
     print("\n=== demonstrateBloomFilter Test ===")
     print(bloomFilter)
     print("=== End demonstrateBloomFilter Test ===\n")
+
+    #expect(bloomFilter.contains("example.com"))
+    // #expect(bloomFilter.contains("example1.com"))
+    #expect(bloomFilter.contains("example2.com"))
+    #expect(bloomFilter.contains("example3.com"))
+    #expect(bloomFilter.contains("example4.com"))
+    #expect(bloomFilter.contains("example5.com"))
+    #expect(bloomFilter.contains("example6.com"))
+    #expect(bloomFilter.contains("example7.com"))
+    #expect(bloomFilter.contains("example8.com"))
+    #expect(bloomFilter.contains("example9.com"))
+    #expect(bloomFilter.contains("example10.com/resource?query=bugs"))
 }
 
 @Test func testCustomStringConvertible() async throws {

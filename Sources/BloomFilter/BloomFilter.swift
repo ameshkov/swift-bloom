@@ -18,8 +18,8 @@ public class BloomFilter: CustomStringConvertible {
 
         var hash = fnvOffsetBasis
         for byte in data.utf8 {
-            hash ^= UInt32(byte)
-            hash = hash &* fnvPrime
+            hash = hash &* fnvPrime  // Multiply by prime
+            hash ^= UInt32(byte)  // XOR operation
         }
         return hash
     }
@@ -132,23 +132,20 @@ public class BloomFilter: CustomStringConvertible {
     ///   - items: Array of strings to add to the filter
     ///   - falsePositiveTolerance: Desired false-positive rate (0.0 < p < 1.0)
     ///   - murmurSeed: Seed value for MurmurHash3 (default: 0x9747b28c)
-    public init(items: [String], falsePositiveTolerance: Double, murmurSeed: UInt32 = 0x9747b28c) {
+    public init(
+        items: [String],
+        falsePositiveTolerance: Double,
+        murmurSeed: UInt32 = 0x9747b28c,
+    ) {
         precondition(
             falsePositiveTolerance > 0.0 && falsePositiveTolerance < 1.0,
             "False positive tolerance must be between 0.0 and 1.0 (exclusive)"
         )
+        precondition(items.count > 0, "Items array must not be empty")
 
         self.numberOfItems = items.count
         self.falsePositiveTolerance = falsePositiveTolerance
         self.murmurSeed = murmurSeed
-
-        // Handle edge case of empty items array
-        if items.isEmpty {
-            self.numberOfBits = 1
-            self.numberOfHashes = 1
-            self.bitArray = Data(count: 1)
-            return
-        }
 
         // Calculate numberOfBits = -n * ln(p) / (ln(2) ^ 2)
         let n = Double(numberOfItems)
@@ -177,12 +174,16 @@ public class BloomFilter: CustomStringConvertible {
     ///   - data: Existing bloom filter data
     ///   - falsePositiveTolerance: False-positive rate used to create the filter
     ///   - numberOfItems: Number of items in the original dataset
+    ///   - numberOfBits: Number of bits in the original dataset
+    ///   - numberOfHashes: Number of hashes in the original dataset
     ///   - murmurSeed: Seed value for MurmurHash3 (default: 0x9747b28c)
     public init(
         data: Data,
         falsePositiveTolerance: Double,
         numberOfItems: Int,
-        murmurSeed: UInt32 = 0x9747b28c
+        numberOfBits: Int,
+        numberOfHashes: Int,
+        murmurSeed: UInt32
     ) {
         precondition(
             falsePositiveTolerance > 0.0 && falsePositiveTolerance < 1.0,
@@ -195,17 +196,41 @@ public class BloomFilter: CustomStringConvertible {
         self.falsePositiveTolerance = falsePositiveTolerance
         self.numberOfItems = numberOfItems
         self.murmurSeed = murmurSeed
-        self.numberOfBits = data.count * 8
+        self.numberOfBits = numberOfBits
+        self.numberOfHashes = numberOfHashes
+    }
 
-        // Calculate numberOfBits using the same formula as the original constructor
-        // to ensure consistency in hash calculations
-        if numberOfItems == 0 {
-            self.numberOfHashes = 1
-        } else {
-            let n = Double(numberOfItems)
-            let hashesCalculation = (Double(numberOfBits) / n) * log(2)
-            self.numberOfHashes = max(1, Int(ceil(hashesCalculation)))
-        }
+    /// Initialize Bloom filter with specific parameters (empty bit array)
+    /// - Parameters:
+    ///   - numberOfBits: Total number of bits in the filter
+    ///   - numberOfHashes: Number of hash functions to use
+    ///   - numberOfItems: Expected number of items (for statistics)
+    ///   - falsePositiveTolerance: Expected false-positive rate (for statistics)
+    ///   - murmurSeed: Seed value for MurmurHash3
+    public init(
+        numberOfBits: Int,
+        numberOfHashes: Int,
+        numberOfItems: Int,
+        falsePositiveTolerance: Double,
+        murmurSeed: UInt32
+    ) {
+        precondition(numberOfBits > 0, "Number of bits must be positive")
+        precondition(numberOfHashes > 0, "Number of hashes must be positive")
+        precondition(numberOfItems >= 0, "Number of items must be non-negative")
+        precondition(
+            falsePositiveTolerance > 0.0 && falsePositiveTolerance < 1.0,
+            "False positive tolerance must be between 0.0 and 1.0 (exclusive)"
+        )
+
+        self.numberOfBits = numberOfBits
+        self.numberOfHashes = numberOfHashes
+        self.numberOfItems = numberOfItems
+        self.falsePositiveTolerance = falsePositiveTolerance
+        self.murmurSeed = murmurSeed
+
+        // Initialize empty bit array
+        let byteCount = (numberOfBits + 7) / 8
+        self.bitArray = Data(count: byteCount)
     }
 
     // MARK: - Public Methods
@@ -238,16 +263,24 @@ public class BloomFilter: CustomStringConvertible {
         return bitArray
     }
 
-    /// Get filter statistics
-    /// - Returns: Dictionary with filter parameters
-    public func getStatistics() -> [String: Any] {
-        return [
-            "numberOfBits": numberOfBits,
-            "numberOfHashes": numberOfHashes,
-            "numberOfItems": numberOfItems,
-            "falsePositiveTolerance": falsePositiveTolerance,
-            "dataSize": bitArray.count,
-        ]
+    public func getNumberOfBits() -> Int {
+        return numberOfBits
+    }
+
+    public func getNumberOfHashes() -> Int {
+        return numberOfHashes
+    }
+
+    public func getNumberOfItems() -> Int {
+        return numberOfItems
+    }
+
+    public func getFalsePositiveTolerance() -> Double {
+        return falsePositiveTolerance
+    }
+
+    public func getMurmurSeed() -> UInt32 {
+        return murmurSeed
     }
 
     // MARK: - CustomStringConvertible
