@@ -49,4 +49,5 @@ periphery-lint:
 
 # Testing
 
-test: swift test --quiet
+test:
+	swift test --quiet
