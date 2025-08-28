@@ -269,7 +269,6 @@ func testCreateBloomFilter() async throws {
     )
 
     bloomFilter.add("example.com")
-    // bloomFilter.add("example1.com")
     bloomFilter.add("example2.com")
     bloomFilter.add("example3.com")
     bloomFilter.add("example4.com")
@@ -280,12 +279,7 @@ func testCreateBloomFilter() async throws {
     bloomFilter.add("example9.com")
     bloomFilter.add("example10.com/resource?query=bugs")
 
-    print("\n=== testCreateBloomFilter ===")
-    print(bloomFilter)
-    print("=== End testCreateBloomFilter ===\n")
-
     #expect(bloomFilter.contains("example.com"))
-    // #expect(bloomFilter.contains("example1.com"))
     #expect(bloomFilter.contains("example2.com"))
     #expect(bloomFilter.contains("example3.com"))
     #expect(bloomFilter.contains("example4.com"))
@@ -295,6 +289,7 @@ func testCreateBloomFilter() async throws {
     #expect(bloomFilter.contains("example8.com"))
     #expect(bloomFilter.contains("example9.com"))
     #expect(bloomFilter.contains("example10.com/resource?query=bugs"))
+    #expect(bloomFilter.getData().base64EncodedString() == "KnFnz7/dUDyK51HqlhTlswav")
 }
 
 @Test
@@ -312,12 +307,7 @@ func testDemonstrateBloomFilter() async throws {
         murmurSeed: 3919904948
     )
 
-    print("\n=== testDemonstrateBloomFilter ===")
-    print(bloomFilter)
-    print("=== End testDemonstrateBloomFilter ===\n")
-
     #expect(bloomFilter.contains("example.com"))
-    // #expect(bloomFilter.contains("example1.com"))
     #expect(bloomFilter.contains("example2.com"))
     #expect(bloomFilter.contains("example3.com"))
     #expect(bloomFilter.contains("example4.com"))
