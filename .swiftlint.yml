@@ -90,6 +90,8 @@ identifier_name:
     - y
     - z
     - js
+    - n
+    - p
   max_length: 60
   allowed_symbols: ["_"]
 

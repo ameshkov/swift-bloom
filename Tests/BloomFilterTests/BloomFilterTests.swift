@@ -20,10 +20,8 @@ func testBloomFilterBasicFunctionality() async throws {
     let nonExistentItems = ["grape", "kiwi", "mango", "orange", "pineapple"]
     var falsePositives = 0
 
-    for item in nonExistentItems {
-        if bloomFilter.contains(item) {
-            falsePositives += 1
-        }
+    for item in nonExistentItems where bloomFilter.contains(item) {
+        falsePositives += 1
     }
 
     // Should have very few false positives with this rate
@@ -105,10 +103,8 @@ func testLargeDataset() async throws {
 
     // All original items should be found
     var foundCount = 0
-    for item in largeItems {
-        if bloomFilter.contains(item) {
-            foundCount += 1
-        }
+    for item in largeItems where bloomFilter.contains(item) {
+        foundCount += 1
     }
     #expect(foundCount == largeItems.count, "All items should be found")
 
@@ -116,10 +112,8 @@ func testLargeDataset() async throws {
     let testItems = (1001...2000).map { "item\($0)" }
     var falsePositives = 0
 
-    for item in testItems {
-        if bloomFilter.contains(item) {
-            falsePositives += 1
-        }
+    for item in testItems where bloomFilter.contains(item) {
+        falsePositives += 1
     }
 
     let actualFalsePositiveRate = Double(falsePositives) / Double(testItems.count)
@@ -182,7 +176,12 @@ func testMurmurSeedFunctionality() async throws {
         falsePositiveTolerance: falsePositiveRate,
         murmurSeed: 0x87654321
     )
-    let filter3 = BloomFilter(items: items, falsePositiveTolerance: falsePositiveRate)  // Default seed
+
+    // Default seed
+    let filter3 = BloomFilter(
+        items: items,
+        falsePositiveTolerance: falsePositiveRate
+    )
 
     // All filters should contain the original items
     for item in items {
@@ -248,9 +247,13 @@ func testMurmurSeedFromData() async throws {
     for item in testItems {
         let originalContains = originalFilter.contains(item)
         let reconstructedContains = reconstructedFilter.contains(item)
+        let msg =
+            "Both filters should agree on test item '\(item)':"
+            + " original=\(originalContains), reconstructed=\(reconstructedContains)"
+
         #expect(
             originalContains == reconstructedContains,
-            "Both filters should agree on test item '\(item)': original=\(originalContains), reconstructed=\(reconstructedContains)"
+            Comment(rawValue: msg)
         )
     }
 }

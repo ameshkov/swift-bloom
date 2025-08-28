@@ -73,7 +73,8 @@ public class BloomFilter: CustomStringConvertible {
             }
 
             remainderValue = remainderValue &* murmurConstant1
-            remainderValue = (remainderValue << rotationBits1) | (remainderValue >> (32 - rotationBits1))
+            remainderValue =
+                (remainderValue << rotationBits1) | (remainderValue >> (32 - rotationBits1))
             remainderValue = remainderValue &* murmurConstant2
             hashValue ^= remainderValue
         }
@@ -93,12 +94,12 @@ public class BloomFilter: CustomStringConvertible {
 
     /// Generate hash indices using double hashing
     private func getHashIndices(for item: String) -> [Int] {
-        let h1 = fnv1a(item)
-        let h2 = murmurHash3(item, seed: murmurSeed)
+        let hash1 = fnv1a(item)
+        let hash2 = murmurHash3(item, seed: murmurSeed)
 
         var indices: [Int] = []
         for i in 0..<numberOfHashes {
-            let index = Int((h1 &+ UInt32(i) &* h2) % UInt32(numberOfBits))
+            let index = Int((hash1 &+ UInt32(i) &* hash2) % UInt32(numberOfBits))
             indices.append(index)
         }
         return indices
@@ -249,10 +250,8 @@ public class BloomFilter: CustomStringConvertible {
     /// - Returns: true if item might be in the set, false if definitely not in the set
     public func contains(_ item: String) -> Bool {
         let indices = getHashIndices(for: item)
-        for index in indices {
-            if !isBitSet(at: index) {
-                return false
-            }
+        for index in indices where !isBitSet(at: index) {
+            return false
         }
         return true
     }
@@ -316,9 +315,11 @@ public class BloomFilter: CustomStringConvertible {
                 + String(byte, radix: 2)
 
             // Print bits with spacing for readability (space after 4th bit)
-            let spacedBits = binaryString.enumerated().map { index, bit in
-                return index == 4 ? " \(bit)" : String(bit)
-            }.joined()
+            let spacedBits = binaryString.enumerated()
+                .map { index, bit in
+                    return index == 4 ? " \(bit)" : String(bit)
+                }
+                .joined()
 
             result += spacedBits
 
