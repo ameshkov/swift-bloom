@@ -3,7 +3,8 @@ import Testing
 
 @testable import BloomFilter
 
-@Test func testBloomFilterBasicFunctionality() async throws {
+@Test
+func testBloomFilterBasicFunctionality() async throws {
     // Test with a small set of items and reasonable false positive rate
     let items = ["apple", "banana", "cherry", "date", "elderberry"]
     let falsePositiveRate = 0.01  // 1%
@@ -36,7 +37,8 @@ import Testing
     #expect(bloomFilter.getMurmurSeed() > 0)
 }
 
-@Test func testBloomFilterFromData() async throws {
+@Test
+func testBloomFilterFromData() async throws {
     // Create a filter with items
     let originalItems = ["test1", "test2", "test3", "test4", "test5"]
     let falsePositiveRate = 0.05
@@ -69,7 +71,8 @@ import Testing
     }
 }
 
-@Test func testHashFunctions() async throws {
+@Test
+func testHashFunctions() async throws {
     // Test that hash functions produce consistent results
     let testString = "hello world"
     let bloomFilter = BloomFilter(items: [testString], falsePositiveTolerance: 0.01)
@@ -80,7 +83,8 @@ import Testing
     #expect(bloomFilter.contains(testString))
 }
 
-@Test func testDoubleHashing() async throws {
+@Test
+func testDoubleHashing() async throws {
     // Test that double hashing produces different indices
     let items = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
     let bloomFilter = BloomFilter(items: items, falsePositiveTolerance: 0.01)
@@ -93,7 +97,8 @@ import Testing
     #expect(bloomFilter.getNumberOfHashes() > 1)
 }
 
-@Test func testLargeDataset() async throws {
+@Test
+func testLargeDataset() async throws {
     // Test with a larger dataset
     let largeItems = (1...1000).map { "item\($0)" }
     let bloomFilter = BloomFilter(items: largeItems, falsePositiveTolerance: 0.001)  // 0.1%
@@ -125,7 +130,8 @@ import Testing
     )
 }
 
-@Test func testValidBoundaryValues() async throws {
+@Test
+func testValidBoundaryValues() async throws {
     // Test valid boundary values that should work
     let validFilter1 = BloomFilter(items: ["test"], falsePositiveTolerance: 0.001)
     #expect(validFilter1.contains("test"))
@@ -139,7 +145,8 @@ import Testing
     #expect(strictFilter.contains("item2"))
 }
 
-@Test func testSpecialCharacters() async throws {
+@Test
+func testSpecialCharacters() async throws {
     // Test with various special characters and Unicode
     let specialItems = [
         "hello@world.com",
@@ -159,7 +166,8 @@ import Testing
     }
 }
 
-@Test func testMurmurSeedFunctionality() async throws {
+@Test
+func testMurmurSeedFunctionality() async throws {
     let items = ["test1", "test2", "test3"]
     let falsePositiveRate = 0.01
 
@@ -193,7 +201,8 @@ import Testing
     #expect(!allSame, "Different seeds should produce different bit patterns")
 }
 
-@Test func testMurmurSeedFromData() async throws {
+@Test
+func testMurmurSeedFromData() async throws {
     let items = ["item1", "item2", "item3"]
     let customSeed: UInt32 = 0xABCDEF00
 
@@ -246,7 +255,8 @@ import Testing
     }
 }
 
-@Test func testCreateBloomFilter() async throws {
+@Test
+func testCreateBloomFilter() async throws {
     let bloomFilter = BloomFilter(
         numberOfBits: 144,
         numberOfHashes: 10,
@@ -267,9 +277,9 @@ import Testing
     bloomFilter.add("example9.com")
     bloomFilter.add("example10.com/resource?query=bugs")
 
-    print("\n=== createBloomFilter Test ===")
+    print("\n=== testCreateBloomFilter ===")
     print(bloomFilter)
-    print("=== End createBloomFilter Test ===\n")
+    print("=== End testCreateBloomFilter ===\n")
 
     #expect(bloomFilter.contains("example.com"))
     // #expect(bloomFilter.contains("example1.com"))
@@ -284,7 +294,8 @@ import Testing
     #expect(bloomFilter.contains("example10.com/resource?query=bugs"))
 }
 
-@Test func demonstrateBloomFilter() async throws {
+@Test
+func testDemonstrateBloomFilter() async throws {
     guard let data = Data(base64Encoded: "KnFnz7/dUDyK51HqlhTlswav") else {
         throw NSError(domain: "Invalid base64 data", code: 0, userInfo: nil)
     }
@@ -298,9 +309,9 @@ import Testing
         murmurSeed: 3919904948
     )
 
-    print("\n=== demonstrateBloomFilter Test ===")
+    print("\n=== testDemonstrateBloomFilter ===")
     print(bloomFilter)
-    print("=== End demonstrateBloomFilter Test ===\n")
+    print("=== End testDemonstrateBloomFilter ===\n")
 
     #expect(bloomFilter.contains("example.com"))
     // #expect(bloomFilter.contains("example1.com"))
@@ -315,14 +326,13 @@ import Testing
     #expect(bloomFilter.contains("example10.com/resource?query=bugs"))
 }
 
-@Test func testCustomStringConvertible() async throws {
+@Test
+func testCustomStringConvertible() async throws {
     // Test the new CustomStringConvertible implementation
     let items = ["test", "demo", "swift"]
     let bloomFilter = BloomFilter(items: items, falsePositiveTolerance: 0.05)
 
-    print("\n=== CustomStringConvertible Test ===")
-    print(bloomFilter)
-    print("=== End CustomStringConvertible Test ===\n")
+    // Issue.record(Comment("testCustomStringConvertible Test - BloomFilter: \(bloomFilter)"))
 
     // Verify that description contains expected information
     let description = bloomFilter.description

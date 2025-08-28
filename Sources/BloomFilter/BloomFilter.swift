@@ -26,67 +26,67 @@ public class BloomFilter: CustomStringConvertible {
 
     /// 32-bit MurmurHash3 hash function
     private func murmurHash3(_ data: String, seed: UInt32) -> UInt32 {
-        let c1: UInt32 = 0xcc9e2d51
-        let c2: UInt32 = 0x1b873593
-        let r1: UInt32 = 15
-        let r2: UInt32 = 13
-        let m: UInt32 = 5
-        let n: UInt32 = 0xe6546b64
+        let murmurConstant1: UInt32 = 0xcc9e2d51
+        let murmurConstant2: UInt32 = 0x1b873593
+        let rotationBits1: UInt32 = 15
+        let rotationBits2: UInt32 = 13
+        let multiplier: UInt32 = 5
+        let additionConstant: UInt32 = 0xe6546b64
 
-        var hash = seed
-        let bytes = Array(data.utf8)
-        let len = bytes.count
+        var hashValue = seed
+        let inputBytes = Array(data.utf8)
+        let dataLength = inputBytes.count
 
         // Process 4-byte chunks
-        let chunks = len / 4
-        for i in 0..<chunks {
-            let start = i * 4
-            var k: UInt32 = 0
-            k |= UInt32(bytes[start])
-            k |= UInt32(bytes[start + 1]) << 8
-            k |= UInt32(bytes[start + 2]) << 16
-            k |= UInt32(bytes[start + 3]) << 24
+        let numberOfChunks = dataLength / 4
+        for chunkIndex in 0..<numberOfChunks {
+            let startIndex = chunkIndex * 4
+            var chunkValue: UInt32 = 0
+            chunkValue |= UInt32(inputBytes[startIndex])
+            chunkValue |= UInt32(inputBytes[startIndex + 1]) << 8
+            chunkValue |= UInt32(inputBytes[startIndex + 2]) << 16
+            chunkValue |= UInt32(inputBytes[startIndex + 3]) << 24
 
-            k = k &* c1
-            k = (k << r1) | (k >> (32 - r1))
-            k = k &* c2
+            chunkValue = chunkValue &* murmurConstant1
+            chunkValue = (chunkValue << rotationBits1) | (chunkValue >> (32 - rotationBits1))
+            chunkValue = chunkValue &* murmurConstant2
 
-            hash ^= k
-            hash = ((hash << r2) | (hash >> (32 - r2)))
-            hash = hash &* m &+ n
+            hashValue ^= chunkValue
+            hashValue = ((hashValue << rotationBits2) | (hashValue >> (32 - rotationBits2)))
+            hashValue = hashValue &* multiplier &+ additionConstant
         }
 
         // Process remaining bytes
-        let remainder = len % 4
-        if remainder > 0 {
-            var k: UInt32 = 0
-            let start = chunks * 4
+        let remainingBytes = dataLength % 4
+        if remainingBytes > 0 {
+            var remainderValue: UInt32 = 0
+            let remainderStartIndex = numberOfChunks * 4
 
-            if remainder >= 3 {
-                k |= UInt32(bytes[start + 2]) << 16
+            if remainingBytes >= 3 {
+                remainderValue |= UInt32(inputBytes[remainderStartIndex + 2]) << 16
             }
-            if remainder >= 2 {
-                k |= UInt32(bytes[start + 1]) << 8
+            if remainingBytes >= 2 {
+                remainderValue |= UInt32(inputBytes[remainderStartIndex + 1]) << 8
             }
-            if remainder >= 1 {
-                k |= UInt32(bytes[start])
+            if remainingBytes >= 1 {
+                remainderValue |= UInt32(inputBytes[remainderStartIndex])
             }
 
-            k = k &* c1
-            k = (k << r1) | (k >> (32 - r1))
-            k = k &* c2
-            hash ^= k
+            remainderValue = remainderValue &* murmurConstant1
+            remainderValue = (remainderValue << rotationBits1) | (remainderValue >> (32 - rotationBits1))
+            remainderValue = remainderValue &* murmurConstant2
+            hashValue ^= remainderValue
         }
 
         // Finalization
-        hash ^= UInt32(len)
-        hash ^= hash >> 16
-        hash = hash &* 0x85ebca6b
-        hash ^= hash >> 13
-        hash = hash &* 0xc2b2ae35
-        hash ^= hash >> 16
+        hashValue ^= UInt32(dataLength)
+        hashValue ^= hashValue >> 16
+        hashValue = hashValue &* 0x85ebca6b
+        hashValue ^= hashValue >> 13
+        hashValue = hashValue &* 0xc2b2ae35
+        hashValue ^= hashValue >> 16
 
-        return hash
+        return hashValue
     }
 
     // MARK: - Double Hashing
@@ -141,7 +141,7 @@ public class BloomFilter: CustomStringConvertible {
             falsePositiveTolerance > 0.0 && falsePositiveTolerance < 1.0,
             "False positive tolerance must be between 0.0 and 1.0 (exclusive)"
         )
-        precondition(items.count > 0, "Items array must not be empty")
+        precondition(!items.isEmpty, "Items array must not be empty")
 
         self.numberOfItems = items.count
         self.falsePositiveTolerance = falsePositiveTolerance
