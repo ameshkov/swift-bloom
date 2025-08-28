@@ -75,4 +75,5 @@ fi
 
 if [ "$(git diff --cached --name-only -- '*.swift' || :)" != '' ]; then
     make swift-lint
+    make test
 fi
